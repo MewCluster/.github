@@ -1,0 +1,24 @@
+name: ✨ Feature Request
+description: 新功能或改进
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: scope
+    attributes:
+      label: 影响范围 / 组件 (Scope/Component)
+      description: 请直接列出所有受影响的子项目或目录路径。单项目仓库可留空。
+    validations:
+      required: false
+  - type: textarea
+    id: motivation
+    attributes:
+      label: 需求背景
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: 期望的解决方案
+    validations:
+      required: true

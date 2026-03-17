@@ -1,0 +1,30 @@
+name: 🐛 Bug Report
+description: 报告错误
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: scope
+    attributes:
+      label: 影响范围 / 组件 (Scope/Component)
+      description: 请直接列出所有受影响的子项目或目录路径。单项目仓库可留空。
+    validations:
+      required: false
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: 复现步骤
+    validations:
+      required: false
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境信息
+    validations:
+      required: false
