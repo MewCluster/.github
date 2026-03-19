@@ -1,0 +1,57 @@
+name: Go Release
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: 'Go version to use (e.g. 1.23.x), mutually exclusive with go-version-file'
+        required: false
+        type: string
+        default: ''
+      go-version-file:
+        description: 'Path to go.mod to determine Go version, mutually exclusive with go-version'
+        required: false
+        type: string
+        default: ''
+      working-directory:
+        description: 'Working directory for the job'
+        required: false
+        type: string
+        default: '.'
+      goreleaser-version:
+        description: 'GoReleaser version'
+        required: false
+        type: string
+        default: 'v6'
+      goreleaser-args:
+        description: 'Additional arguments for GoReleaser'
+        required: false
+        type: string
+        default: 'release --clean'
+    secrets:
+      github-token:
+        description: 'GitHub Token for creating releases'
+        required: true
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ inputs.go-version }}
+          go-version-file: ${{ inputs.go-version-file }}
+          cache: false
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: ${{ inputs.goreleaser-version }}
+          args: ${{ inputs.goreleaser-args }}
+          workdir: ${{ inputs.working-directory }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}

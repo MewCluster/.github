@@ -1,0 +1,55 @@
+name: Go E2E
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: 'Go version to use'
+        required: false
+        type: string
+        default: '1.21.x'
+      go-version-file:
+        description: 'Path to go.mod file to determine Go version. Takes precedence over go-version if provided.'
+        required: false
+        type: string
+        default: ''
+      working-directory:
+        description: 'Working directory for the job'
+        required: false
+        type: string
+        default: '.'
+      kind-version:
+        description: 'kind version'
+        required: false
+        type: string
+        default: 'v0.27.0'
+      goproxy:
+        description: 'GOPROXY value'
+        required: false
+        type: string
+        default: 'https://proxy.golang.org,direct'
+jobs:
+  e2e:
+    name: E2E Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ inputs.go-version-file == '' && inputs.go-version || '' }}
+          go-version-file: ${{ inputs.go-version-file != '' && inputs.go-version-file || '' }}
+      - name: Install kind
+        run: | # shell
+          curl -Lo ./kind https://kind.sigs.k8s.io/dl/${{ inputs.kind-version }}/kind-linux-$(go env GOARCH)
+          chmod +x ./kind
+          sudo mv ./kind /usr/local/bin/kind
+      - name: Verify kind installation
+        run: kind version
+      - name: Run E2E tests
+        working-directory: ${{ inputs.working-directory }}
+        run: | # shell
+          go mod tidy
+          make test-e2e
+        env:
+          GOPROXY: ${{ inputs.goproxy }}

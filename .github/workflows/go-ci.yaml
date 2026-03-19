@@ -1,0 +1,56 @@
+name: Go CI
+on:
+  workflow_call:
+    inputs:
+      go-version:
+        description: 'Go version to use, mutually exclusive with go-version-file'
+        required: false
+        type: string
+        default: ''
+      go-version-file:
+        description: 'Path to go.mod to determine Go version, mutually exclusive with go-version'
+        required: false
+        type: string
+        default: ''
+      working-directory:
+        description: 'Working directory for the job'
+        required: false
+        type: string
+        default: '.'
+      goproxy:
+        description: 'GOPROXY value'
+        required: false
+        type: string
+        default: 'https://proxy.golang.org,direct'
+jobs:
+  lint-and-test:
+    name: Lint and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ inputs.go-version }}
+          go-version-file: ${{ inputs.go-version-file }}
+      - name: Install dependencies
+        working-directory: ${{ inputs.working-directory }}
+        run: go mod tidy
+        env:
+          GOPROXY: ${{ inputs.goproxy }}
+      - name: Verify lint configuration
+        working-directory: ${{ inputs.working-directory }}
+        run: make lint-config
+        env:
+          GOPROXY: ${{ inputs.goproxy }}
+      - name: Lint
+        working-directory: ${{ inputs.working-directory }}
+        run: make lint
+        env:
+          GOPROXY: ${{ inputs.goproxy }}
+      - name: Test
+        working-directory: ${{ inputs.working-directory }}
+        run: make test
+        env:
+          GOPROXY: ${{ inputs.goproxy }}
