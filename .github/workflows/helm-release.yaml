@@ -1,0 +1,64 @@
+name: Reusable Helm Release
+
+on:
+  workflow_call:
+    inputs:
+      chart_path:
+        description: 'Path to the Helm chart directory'
+        required: true
+        type: string
+      chart_name:
+        description: 'Name of the Helm chart (e.g., k8s-agentbox-chart)'
+        required: true
+        type: string
+      helm_version:
+        description: 'Helm version to use'
+        required: false
+        type: string
+        default: 'v3.14.0'
+      registry:
+        description: 'OCI Registry URL'
+        required: false
+        type: string
+        default: 'ghcr.io'
+
+jobs:
+  helm-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: ${{ inputs.helm_version }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ inputs.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Package and Push Helm Chart
+        run: | # shell
+          cd ${{ inputs.chart_path }}
+          # Remove 'v' prefix for Helm version (e.g., v1.0.0 -> 1.0.0)
+          VERSION=${GITHUB_REF_NAME#v}
+
+          # Package the chart
+          make helm-package HELM_VERSION=$VERSION HELM_APP_VERSION=$VERSION
+
+          # Find the packaged chart and push it
+          CHART_PACKAGE=$(find dist -name "${{ inputs.chart_name }}-*.tgz" | head -n 1)
+
+          # Push to OCI registry (ghcr.io/<owner>/<chart-name>)
+          # Note: github.repository_owner is converted to lowercase automatically by GHCR in most cases
+          # but for safety you might want to ensure lowercase if you encounter issues.
+          helm push "$CHART_PACKAGE" oci://${{ inputs.registry }}/${{ github.repository_owner }}
