@@ -53,12 +53,11 @@ jobs:
           VERSION=${GITHUB_REF_NAME#v}
 
           # Package the chart
-          make helm-package HELM_VERSION=$VERSION HELM_APP_VERSION=$VERSION
+          make helm-package HELM_VERSION=$VERSION HELM_APP_VERSION=${GITHUB_REF_NAME}
 
           # Find the packaged chart and push it
-          CHART_PACKAGE=$(find dist -name "${{ inputs.chart_name }}-*.tgz" | head -n 1)
+          CHART_PACKAGE="dist/${{ inputs.chart_name }}-${VERSION}.tgz"
 
-          # Push to OCI registry (ghcr.io/<owner>/<chart-name>)
-          # Note: github.repository_owner is converted to lowercase automatically by GHCR in most cases
-          # but for safety you might want to ensure lowercase if you encounter issues.
-          helm push "$CHART_PACKAGE" oci://${{ inputs.registry }}/${{ github.repository_owner }}
+          # Push to OCI registry (ghcr.io/<chart-name>)
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          helm push "$CHART_PACKAGE" oci://${{ inputs.registry }}/${OWNER}/charts
